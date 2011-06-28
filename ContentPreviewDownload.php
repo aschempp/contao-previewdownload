@@ -1,13 +1,13 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * TYPOlight webCMS
- * Copyright (C) 2005 Leo Feyer
+ * TYPOlight Open Source CMS
+ * Copyright (C) 2005-2010 Leo Feyer
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation, either
- * version 2.1 of the License, or (at your option) any later version.
+ * version 3 of the License, or (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,12 +16,13 @@
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this program. If not, please visit the Free
- * Software Foundation website at http://www.gnu.org/licenses/.
+ * Software Foundation website at <http://www.gnu.org/licenses/>.
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009
+ * @copyright  Andreas Schempp 2009-2010
  * @author     Andreas Schempp <andreas@schempp.ch>
  * @license    http://opensource.org/licenses/lgpl-3.0.html
+ * @version    $Id$
  */
 
 
@@ -86,42 +87,64 @@ class ContentPreviewDownload extends ContentElement
 		}
 		
 		// Generate preview image
-		$preview = 'system/html/preview' . $this->id . '_' . md5($this->previewFile) . '.jpg';
+		$preview = 'system/html/preview' . $this->id . '-' . substr(md5($this->previewFile), 0, 8) . '.jpg';
 		
-		if (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
+		if (strlen($this->previewImage) && is_file(TL_ROOT . '/' . $this->previewImage))
 		{
-			$strFirst = '';
-			
-			if ($objFile->extension == 'pdf')
-				$strFirst = '[0]';
-			
-			
-			$strExec = shell_exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview));
-			
-/*
-			if (!$strExec)
+			$preview = $this->previewImage;
+		}
+		elseif (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
+		{
+			if (class_exists('Imagick', false))
 			{
-				$this->log('Creating preview from "' . $this->previewFile . '" failed!<br />'.$code.'<br />'.print_r($output, true), 'ContentPreviewDownload compile()', TL_GENERAL);
+				//!@todo Imagick PHP-Funktionen verwenden, falls vorhanden
 			}
-*/
+			else
+			{
+				$strFirst = '';
+				
+				if ($objFile->extension == 'pdf')
+					$strFirst = '[0]';
+				
+				@exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
+				
+				if (!is_file(TL_ROOT . '/' . $preview))
+				{
+					$convert_output = implode("<br />", $convert_output);
+					$reason = 'ImageMagick Exit Code: '.$convert_code;
+
+					if ($convert_code == 127)
+					{
+						$reason = 'ImageMagick is not available at ' . $GLOBALS['TL_CONFIG']['imPath'];
+					}
+					if (strpos($convert_output, 'gs: command not found'))
+					{
+						$reason = 'Unable to read PDF due to GhostScript error.';
+					}
+					
+					$this->log('Creating preview from "' . $this->previewFile . '" failed! '.$reason."\n\n".$convert_output, 'ContentPreviewDownload compile()', TL_ERROR);
+				}
+			}
 		}
 		
-		
-		$imgSize = deserialize($this->size);
-		$arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
-
-		// Adjust image size in the back end
-		if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
+		if (is_file(TL_ROOT . '/' . $preview))
 		{
-			$imgSize[0] = 640;
-			$imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
-		}
-
-		$src = $this->getImage($this->urlEncode($preview), $imgSize[0], $imgSize[1]);
-
-		if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
-		{
-			$this->Template->previewImgSize = ' ' . $imgSize[3];
+			$imgSize = deserialize($this->size);
+			$arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
+	
+			// Adjust image size in the back end
+			if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
+			{
+				$imgSize[0] = 640;
+				$imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
+			}
+	
+			$src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
+	
+			if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
+			{
+				$this->Template->previewImgSize = ' ' . $imgSize[3];
+			}
 		}
 		
 		if ($this->previewTips)
@@ -134,9 +157,10 @@ class ContentPreviewDownload extends ContentElement
 		$this->Template->preview = $src;
 		$this->Template->icon = $icon;
 		$this->Template->link = $this->linkTitle;
-		$this->Template->rel = $GLOBALS['TL_LANG']['MSC']['previewFileName'] . ' ' . $objFile->basename . '<br />' . $GLOBALS['TL_LANG']['MSC']['previewFileSize'] . ' ' . $size;
+		$this->Template->rel = $GLOBALS['TL_LANG']['MSC']['previewFileName'] . ' ' . $objFile->basename . ', ' . $GLOBALS['TL_LANG']['MSC']['previewFileSize'] . ' ' . $size;
 		$this->Template->margin = $this->generateMargin(deserialize($this->imagemargin), 'padding');
 		$this->Template->title = specialchars($this->linkTitle);
 		$this->Template->href = $this->urlEncode($this->previewFile); //$this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($this->Environment->request, '?') !== false) ? '&amp;' : '?') . 'file=' . $this->urlEncode($this->previewFile);
 	}
 }
+
