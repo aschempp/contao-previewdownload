@@ -19,7 +19,18 @@
 
 
 /**
- * Content Elements
+ * Register the classes
  */
-$GLOBALS['TL_CTE']['files']['previewdownload'] = 'ContentPreviewDownload';
+ClassLoader::addClasses(array
+(
+	'ContentPreviewDownload' => 'system/modules/previewdownload/ContentPreviewDownload.php'
+));
 
+
+/**
+ * Register the templates
+ */
+TemplateLoader::addFiles(array
+(
+	'ce_previewdownload' => 'system/modules/previewdownload/templates'
+));

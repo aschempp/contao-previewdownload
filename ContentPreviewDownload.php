@@ -1,28 +1,20 @@
-<?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
+<?php
 
 /**
- * TYPOlight Open Source CMS
+ * Contao Open Source CMS
  * Copyright (C) 2005-2010 Leo Feyer
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * 
+ * Formerly known as TYPOlight Open Source CMS.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at <http://www.gnu.org/licenses/>.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
  *
  * PHP version 5
- * @copyright  Andreas Schempp 2009-2010
- * @author     Andreas Schempp <andreas@schempp.ch>
- * @license    http://opensource.org/licenses/lgpl-3.0.html
- * @version    $Id$
+ * @copyright  terminal42 gmbh 2009-2013
+ * @author     Andreas Schempp <andreas.schempp@terminal42.ch>
+ * @license    LGPL
  */
 
 
@@ -42,6 +34,17 @@ class ContentPreviewDownload extends ContentElement
 	 */
 	public function generate()
 	{
+		// Contao 3 compatibility
+		if (version_compare(VERSION, '3.0', '>='))
+		{
+			$objModel = FilesModel::findByPk($this->previewFile);
+
+			if ($objModel !== null)
+			{
+				$this->previewFile = $objModel->path;
+			}
+		}
+
 		// Return if there is no file
 		if (!strlen($this->previewFile) || !is_file(TL_ROOT . '/' . $this->previewFile))
 		{
@@ -70,7 +73,7 @@ class ContentPreviewDownload extends ContentElement
 		{
 			return;
 		}
-		
+
 
 		$size = number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB';
 
@@ -81,14 +84,31 @@ class ContentPreviewDownload extends ContentElement
 
 		$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
 
+		// Contao 3 compatibility
+		if (version_compare(VERSION, '3.0', '>='))
+		{
+			$icon = 'assets/contao/images/' . $objFile->icon;
+		}
+
 		if (($imgSize = @getimagesize(TL_ROOT . '/' . $icon)) !== false)
 		{
 			$this->Template->imgSize = ' ' . $imgSize[3];
 		}
-		
+
 		// Generate preview image
 		$preview = 'system/html/preview' . $this->id . '-' . substr(md5($this->previewFile), 0, 8) . '.jpg';
-		
+
+		// Contao 3 compatibility
+		if (version_compare(VERSION, '3.0', '>='))
+		{
+			$objModel = FilesModel::findByPk($this->previewImage);
+
+			if ($objModel !== null)
+			{
+				$this->previewImage = $objModel->path;
+			}
+		}
+
 		if (strlen($this->previewImage) && is_file(TL_ROOT . '/' . $this->previewImage))
 		{
 			$preview = $this->previewImage;
@@ -102,12 +122,12 @@ class ContentPreviewDownload extends ContentElement
 			else
 			{
 				$strFirst = '';
-				
+
 				if ($objFile->extension == 'pdf')
 					$strFirst = '[0]';
-				
+
 				@exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
-				
+
 				if (!is_file(TL_ROOT . '/' . $preview))
 				{
 					$convert_output = implode("<br />", $convert_output);
@@ -121,39 +141,39 @@ class ContentPreviewDownload extends ContentElement
 					{
 						$reason = 'Unable to read PDF due to GhostScript error.';
 					}
-					
+
 					$this->log('Creating preview from "' . $this->previewFile . '" failed! '.$reason."\n\n".$convert_output, 'ContentPreviewDownload compile()', TL_ERROR);
 				}
 			}
 		}
-		
+
 		if (is_file(TL_ROOT . '/' . $preview))
 		{
 			$imgSize = deserialize($this->size);
 			$arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
-	
+
 			// Adjust image size in the back end
 			if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
 			{
 				$imgSize[0] = 640;
 				$imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
 			}
-	
+
 			$src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
-	
+
 			if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
 			{
 				$this->Template->previewImgSize = ' ' . $imgSize[3];
 			}
 		}
-		
+
 		if ($this->previewTips)
 		{
 			$this->Template->showTip = true;
-			$GLOBALS['TL_CSS'][] = 'system/modules/previewdownload/html/tips.css';
-			$GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/previewdownload/html/tips.js';
+			$GLOBALS['TL_CSS'][] = 'system/modules/previewdownload/assets/tips.css';
+			$GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/previewdownload/assets/tips.js';
 		}
-		
+
 		$this->Template->preview = $src;
 		$this->Template->icon = $icon;
 		$this->Template->link = $this->linkTitle;
