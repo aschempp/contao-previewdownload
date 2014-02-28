@@ -21,7 +21,7 @@
 class ContentPreviewDownload extends ContentElement
 {
 
-	/**
+        /**
 	 * Template
 	 * @var string
 	 */
@@ -37,7 +37,7 @@ class ContentPreviewDownload extends ContentElement
 		// Contao 3 compatibility
 		if (version_compare(VERSION, '3.0', '>='))
 		{
-			$objModel = FilesModel::findByPk($this->previewFile);
+			$objModel = \FilesModel::findById($this->previewFile);
 
 			if ($objModel !== null)
 			{
@@ -98,10 +98,15 @@ class ContentPreviewDownload extends ContentElement
 		// Generate preview image
 		$preview = 'system/html/preview' . $this->id . '-' . substr(md5($this->previewFile), 0, 8) . '.jpg';
 
+                // Contao 3 compatibility
+                if (version_compare(VERSION, '3.0', '>=')) {
+                    $preview = 'system/tmp/' . $this->id . '-' . substr(md5($this->previewFile), 0, 8) . '.jpg';
+                }
+
 		// Contao 3 compatibility
 		if (version_compare(VERSION, '3.0', '>='))
 		{
-			$objModel = FilesModel::findByPk($this->previewImage);
+			$objModel = \FilesModel::findById($this->previewImage);
 
 			if ($objModel !== null)
 			{
@@ -109,11 +114,24 @@ class ContentPreviewDownload extends ContentElement
 			}
 		}
 
-		if (strlen($this->previewImage) && is_file(TL_ROOT . '/' . $this->previewImage))
+                // contao allowed file name with spaces, imagemagick not
+                $booImagemagick = true;
+                if (strstr($this->previewFile, ' '))
+                {
+                     $this->log('Creating preview from "' . $this->previewFile . '" failed! File name with spaces', 'ContentPreviewDownload compile()', TL_ERROR);
+                     $booImagemagick = false;
+                     if (TL_MODE == 'BE')
+                     {
+                        $this->linkTitle .= '<p>Creating preview failed! <a href="/contao/main.php?do=log">System log</a></p>';
+                     }
+                }
+
+
+                if (strlen($this->previewImage) && is_file(TL_ROOT . '/' . $this->previewImage))
 		{
 			$preview = $this->previewImage;
 		}
-		elseif (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
+		elseif ( ( !is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800) ) && $booImagemagick ) // Image older than a week
 		{
 			if (class_exists('Imagick', false))
 			{
@@ -143,28 +161,39 @@ class ContentPreviewDownload extends ContentElement
 					}
 
 					$this->log('Creating preview from "' . $this->previewFile . '" failed! '.$reason."\n\n".$convert_output, 'ContentPreviewDownload compile()', TL_ERROR);
+                                        $this->linkTitle .= '<p>Creating preview failed! <a href="/contao/main.php?do=log">System log</a></p>';
 				}
 			}
 		}
 
 		if (is_file(TL_ROOT . '/' . $preview))
 		{
-			$imgSize = deserialize($this->size);
-			$arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
+                    $imgIndividualSize = deserialize($this->size);
+                    $imgDefaultSize = deserialize($GLOBALS['TL_CONFIG']['imSize']);
+                    $arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
 
-			// Adjust image size in the back end
-			if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
-			{
-				$imgSize[0] = 640;
-				$imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
-			}
 
-			$src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
+                    if ($imgIndividualSize[0] != '' || $imgIndividualSize[1] != '') { // individualSize
+                        $imgSize = $imgIndividualSize;
+                    } elseif ($imgDefaultSize[0] != '' || $imgDefaultSize[1] != '') { // preferences -> defaultSize
+                        if ($GLOBALS['TL_CONFIG']['pageOrientation'] && $arrImageSize[0] >= $arrImageSize[1]) {
+                            $imgSize = array($imgDefaultSize[1], $imgDefaultSize[0], $imgDefaultSize[2]);
+                      } else {
+                            $imgSize = $imgDefaultSize;
+                        }
+                    } else {
+                        if ($arrImageSize[0] >= $arrImageSize[1]) {
+                            $imgSize = array('148', '105', 'center_center');
+                        } else {
+                            $imgSize = array('105', '148', 'center_center');
+                        }
+                    }
 
-			if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
-			{
-				$this->Template->previewImgSize = ' ' . $imgSize[3];
-			}
+                    $src = $this->getImage($preview, $imgSize[0], $imgSize[1], $imgSize[2]);
+
+                    if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false) {
+                        $this->Template->previewImgSize = ' ' . $imgSize[3];
+                    }
 		}
 
 		if ($this->previewTips)
@@ -174,13 +203,23 @@ class ContentPreviewDownload extends ContentElement
 			$GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/previewdownload/assets/tips.js';
 		}
 
+                $strHref = $this->Environment->request;
+
+		// Remove an existing file parameter (see #5683)
+		if (preg_match('/(&(amp;)?|\?)file=/', $strHref))
+		{
+			$strHref = preg_replace('/(&(amp;)?|\?)file=[^&]+/', '', $strHref);
+		}
+
+		$strHref .= (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($strHref, '?') !== false) ? '&amp;' : '?') . 'file=' . \System::urlEncode($this->previewFile);
+
 		$this->Template->preview = $src;
 		$this->Template->icon = $icon;
 		$this->Template->link = $this->linkTitle;
 		$this->Template->rel = $GLOBALS['TL_LANG']['MSC']['previewFileName'] . ' ' . $objFile->basename . ', ' . $GLOBALS['TL_LANG']['MSC']['previewFileSize'] . ' ' . $size;
 		$this->Template->margin = $this->generateMargin(deserialize($this->imagemargin), 'padding');
 		$this->Template->title = specialchars($this->linkTitle);
-		$this->Template->href = $this->urlEncode($this->previewFile); //$this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($this->Environment->request, '?') !== false) ? '&amp;' : '?') . 'file=' . $this->urlEncode($this->previewFile);
+		$this->Template->href = $strHref;
 	}
 }
 

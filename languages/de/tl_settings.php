@@ -22,10 +22,13 @@
  * Fields
  */
 $GLOBALS['TL_LANG']['tl_settings']['imPath']	= array('Pfad zu ImageMagick', 'Wird für PDF-zu-JPEG Konvertierung benötigt');
+$GLOBALS['TL_LANG']['tl_settings']['imSize']	= array('Standard Bildgrösse', 'Standard Bildgrösse für Vorschau-Download');
+$GLOBALS['TL_LANG']['tl_settings']['pageOrientation']	= array('Seiteausrichtung berücksichtigen', 'Bei Hochformat werden die Werte belassen. Bei Querformat werden die Werte vertauscht.');
 
 
 /**
  * Legends
  */
 $GLOBALS['TL_LANG']['tl_settings']['binary_legend']		= 'Ausführbare Programme';
+$GLOBALS['TL_LANG']['tl_settings']['previewdownload_legend']	= 'Vorschau-Download';
 
