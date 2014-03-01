@@ -21,7 +21,7 @@
 /**
  * Palettes
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes']['previewdownload']	= '{type_legend},type,headline;{source_legend},previewFile;{image_legend},previewImage,alt,size,imagemargin;{dwnconfig_legend},linkTitle,addToSitemap,previewTips;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['previewdownload']	= '{type_legend},type,headline;{source_legend},previewFile;{image_legend},previewImage,size,imagemargin;{dwnconfig_legend},linkTitle,addToSitemap,previewTips;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 
 /**

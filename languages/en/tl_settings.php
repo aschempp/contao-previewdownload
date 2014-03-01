@@ -22,10 +22,14 @@
  * Fields
  */
 $GLOBALS['TL_LANG']['tl_settings']['imPath']			= array('Path to ImageMagick', 'This is required for PDF-to-JPG conversion.');
+$GLOBALS['TL_LANG']['tl_settings']['imSize']                    = array('Standard image size', 'SStandard image size for preview download');
+$GLOBALS['TL_LANG']['tl_settings']['pageOrientation']           = array('Consider page orientation', 'In Portrait, the values ​​are left. In landscape mode, the values ​​are swapped.');
+
 
 
 /**
  * Legends
  */
 $GLOBALS['TL_LANG']['tl_settings']['binary_legend']		= 'Executable applications';
+$GLOBALS['TL_LANG']['tl_settings']['previewdownload_legend']	= 'Preview download';
 
