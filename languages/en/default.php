@@ -27,6 +27,5 @@ $GLOBALS['TL_LANG']['CTE']['previewdownload']	= array('Preview Download', 'Conte
 /**
  * Miscellaneous
  */
-$GLOBALS['TL_LANG']['MSC']['previewFileName']	= 'File name:';
-$GLOBALS['TL_LANG']['MSC']['previewFileSize']	= 'File size:';
+$GLOBALS['TL_LANG']['MSC']['creatingPreviewFailed']	= '<p>Creating preview image failed! <a href="/contao/main.php?do=log">System log</a></p>';
 

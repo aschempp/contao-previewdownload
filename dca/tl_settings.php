@@ -16,8 +16,6 @@
  * @author     Andreas Schempp <andreas.schempp@terminal42.ch>
  * @license    LGPL
  */
-
-
 /**
  * Palettes
  */
@@ -28,9 +26,8 @@ $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{binary_legend},im
  * Fields
  */
 $GLOBALS['TL_DCA']['tl_settings']['fields']['imPath'] = array
-(
-	'label'				=> &$GLOBALS['TL_LANG']['tl_settings']['imPath'],
-	'inputType'			=> 'text',
-	'eval'				=> array('tl_class'=>'long'),
+    (
+    'label' => &$GLOBALS['TL_LANG']['tl_settings']['imPath'],
+    'inputType' => 'text',
+    'eval' => array('tl_class' => 'long'),
 );
-

@@ -27,6 +27,5 @@ $GLOBALS['TL_LANG']['CTE']['previewdownload']	= array('Vorschau-Download', 'Down
 /**
  * Miscellaneous
  */
-$GLOBALS['TL_LANG']['MSC']['previewFileName']	= 'Dateiname:';
-$GLOBALS['TL_LANG']['MSC']['previewFileSize']	= 'Dateigrösse:';
+$GLOBALS['TL_LANG']['MSC']['creatingPreviewFailed']	= '<p>Vorschaubild konnte nicht generiert werden! <a href="/contao/main.php?do=log">System-Log</a></p>';
 
