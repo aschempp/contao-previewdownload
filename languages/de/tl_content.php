@@ -24,4 +24,4 @@
 $GLOBALS['TL_LANG']['tl_content']['previewFile']	= array('Download-Datei', 'Wählen Sie die Datei, welche zum Download angeboten werden soll.');
 $GLOBALS['TL_LANG']['tl_content']['previewImage']	= array('Vorschaubild', 'Sie können ein eigenes Vorschaubild angeben, anstatt eines automatisch erstellen zu lassen.');
 $GLOBALS['TL_LANG']['tl_content']['previewTips']	= array('Popup anzeigen', 'Popup mit weiteren Informationen beim darüberfahren anzeigen.');
-
+$GLOBALS['TL_LANG']['tl_content']['previewImageSize']	= array('Bildbreite und Bildhöhe', 'Hier können Sie die Abmessungen des Bildes und den Skalierungsmodus festlegen.');
