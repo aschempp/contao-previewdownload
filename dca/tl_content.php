@@ -33,6 +33,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['previewFile'] = array
 	'exclude'                 => true,
 	'inputType'               => 'fileTree',
 	'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'pdf,jpg,jpeg,gif,png', 'mandatory'=>true, 'tl_class'=>'clr'),
+	'sql'                     => "binary(16) NULL",
 );
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['previewImage'] = array
@@ -41,6 +42,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['previewImage'] = array
 	'exclude'                 => true,
 	'inputType'               => 'fileTree',
 	'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'jpg,jpeg,gif,png', 'tl_class'=>'clr'),
+	'sql'                     => "binary(16) NULL",
 );
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['previewTips'] = array
@@ -49,5 +51,6 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['previewTips'] = array
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
 	'eval'					  => array('tl_class'=>'w50 m12'),
+	'sql'                     => "char(1) NOT NULL default ''",
 );
 
