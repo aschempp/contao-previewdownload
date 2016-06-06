@@ -34,16 +34,20 @@ class ContentPreviewDownload extends ContentElement
 	 */
 	public function generate()
 	{
-		// Contao 3 compatibility
-		if (version_compare(VERSION, '3.0', '>='))
-		{
-			$objModel = FilesModel::findByPk($this->previewFile);
 
-			if ($objModel !== null)
+		$objModel = \FilesModel::findByUuid($this->previewFile);
+
+		if ($objModel === null)
+		{
+			if (!\Validator::isUuid($this->singleSRC))
 			{
-				$this->previewFile = $objModel->path;
+				return '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
 			}
+
+			return '';
 		}
+		
+		$this->previewFile = $objModel->path;
 
 		// Return if there is no file
 		if (!strlen($this->previewFile) || !is_file(TL_ROOT . '/' . $this->previewFile))
@@ -82,13 +86,7 @@ class ContentPreviewDownload extends ContentElement
 			$this->linkTitle = $objFile->basename;
 		}
 
-		$icon = 'system/themes/' . $this->getTheme() . '/images/' . $objFile->icon;
-
-		// Contao 3 compatibility
-		if (version_compare(VERSION, '3.0', '>='))
-		{
-			$icon = 'assets/contao/images/' . $objFile->icon;
-		}
+		$icon = 'assets/contao/images/' . $objFile->icon;
 
 		if (($imgSize = @getimagesize(TL_ROOT . '/' . $icon)) !== false)
 		{
@@ -96,35 +94,48 @@ class ContentPreviewDownload extends ContentElement
 		}
 
 		// Generate preview image
-		$preview = 'system/html/preview' . $this->id . '-' . substr(md5($this->previewFile), 0, 8) . '.jpg';
+		$strCacheKey = substr(md5($this->previewFile), 0, 8);		
+		$preview = 'assets/images/' . substr($strCacheKey, -1) . '/preview' . $this->id . '-' . $strCacheKey . '.jpg';
 
-		// Contao 3 compatibility
-		if (version_compare(VERSION, '3.0', '>='))
+		$blnHasPreviewImage = false;
+		
+		if ($this->previewImage)
 		{
-			$objModel = FilesModel::findByPk($this->previewImage);
-
-			if ($objModel !== null)
+			$objPreviewModel = \FilesModel::findByUuid($this->previewImage);
+			
+			if ($objPreviewModel !== null)
 			{
-				$this->previewImage = $objModel->path;
+				$this->previewImage = $objPreviewModel->path;
+				$blnHasPreviewImage = true;
 			}
 		}
+		
 
-		if (strlen($this->previewImage) && is_file(TL_ROOT . '/' . $this->previewImage))
+		if ($blnHasPreviewImage && is_file(TL_ROOT . '/' . $this->previewImage))
 		{
 			$preview = $this->previewImage;
 		}
 		elseif (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
 		{
+			
+			$strFirst = '';
+
+			if ($objFile->extension == 'pdf')
+				$strFirst = '[0]';
+			
 			if (class_exists('Imagick', false))
 			{
-				//!@todo Imagick PHP-Funktionen verwenden, falls vorhanden
+			
+				$im = new Imagick();
+				$im->readimage(TL_ROOT . '/' . $this->previewFile . $strFirst); 
+				$im->setImageFormat('jpg');    
+				$im->writeImage(TL_ROOT . '/' . $preview); 
+				$im->clear(); 
+				$im->destroy();
+				
 			}
 			else
 			{
-				$strFirst = '';
-
-				if ($objFile->extension == 'pdf')
-					$strFirst = '[0]';
 
 				@exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
 
