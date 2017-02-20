@@ -21,7 +21,7 @@
 /**
  * Palettes
  */
-$GLOBALS['TL_DCA']['tl_content']['palettes']['previewdownload']	= '{type_legend},type,headline;{source_legend},previewFile;{image_legend},previewImage,alt,size,imagemargin;{dwnconfig_legend},linkTitle,addToSitemap,previewTips;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['previewdownload']	= '{type_legend},type,headline;{source_legend},previewFile,previewExtension;{image_legend},previewImage,alt,size,imagemargin;{dwnconfig_legend},linkTitle,addToSitemap,previewTips;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 
 
 /**
@@ -29,28 +29,37 @@ $GLOBALS['TL_DCA']['tl_content']['palettes']['previewdownload']	= '{type_legend}
  */
 $GLOBALS['TL_DCA']['tl_content']['fields']['previewFile'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewFile'],
-	'exclude'                 => true,
-	'inputType'               => 'fileTree',
-	'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'pdf,jpg,jpeg,gif,png', 'mandatory'=>true, 'tl_class'=>'clr'),
-	'sql'                     => "binary(16) NULL",
+    'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewFile'],
+    'exclude'                 => true,
+    'inputType'               => 'fileTree',
+    'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'pdf,jpg,jpeg,gif,png', 'mandatory'=>true, 'tl_class'=>'clr'),
+    'sql'                     => "binary(16) NULL",
 );
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['previewImage'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewImage'],
-	'exclude'                 => true,
-	'inputType'               => 'fileTree',
-	'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'jpg,jpeg,gif,png', 'tl_class'=>'clr'),
-	'sql'                     => "binary(16) NULL",
+    'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewImage'],
+    'exclude'                 => true,
+    'inputType'               => 'fileTree',
+    'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'jpg,jpeg,gif,png', 'tl_class'=>'clr'),
+    'sql'                     => "binary(16) NULL",
 );
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['previewTips'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewTips'],
-	'exclude'                 => true,
-	'inputType'               => 'checkbox',
-	'eval'					  => array('tl_class'=>'w50 m12'),
-	'sql'                     => "char(1) NOT NULL default ''",
+    'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewTips'],
+    'exclude'                 => true,
+    'inputType'               => 'checkbox',
+    'eval'                    => array('tl_class'=>'w50 m12'),
+    'sql'                     => "char(1) NOT NULL default ''",
 );
 
+$GLOBALS['TL_DCA']['tl_content']['fields']['previewExtension'] = array
+(
+    'label'                   => &$GLOBALS['TL_LANG']['tl_content']['previewExtension'],
+    'exclude'                 => true,
+    'inputType'               => 'select',
+    'options'                 => array('jpg', 'png'),
+    'eval'                    => array('tl_class'=>'w50'),
+    'sql'                     => "varchar(8) NOT NULL default ''",
+);

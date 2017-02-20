@@ -17,7 +17,12 @@
  * @license    LGPL
  */
 
-
+/**
+ * @property string $previewFile
+ * @property string $previewImage
+ * @property string $previewExtension
+ * @property array  $size
+ */
 class ContentPreviewDownload extends ContentElement
 {
 
@@ -34,7 +39,6 @@ class ContentPreviewDownload extends ContentElement
      */
     public function generate()
     {
-
         $objModel = \FilesModel::findByUuid($this->previewFile);
 
         if ($objModel === null)
@@ -59,6 +63,10 @@ class ContentPreviewDownload extends ContentElement
         if (strlen($this->Input->get('file')) && $this->Input->get('file') == $this->previewFile)
         {
             $this->sendFileToBrowser($this->previewFile);
+        }
+
+        if (!$this->previewExtension) {
+            $this->previewExtension = 'jpg';
         }
 
         return parent::generate();
@@ -94,7 +102,13 @@ class ContentPreviewDownload extends ContentElement
 
         // Generate preview image
         $strCacheKey = substr(md5($this->previewFile), 0, 8);
-        $preview = 'assets/images/' . substr($strCacheKey, -1) . '/preview' . $this->id . '-' . $strCacheKey . '.jpg';
+        $preview = sprintf(
+            'assets/images/%s/preview%s-%s.%s',
+            substr($strCacheKey, -1),
+            $this->id,
+            $strCacheKey,
+            $this->previewExtension
+        );
 
         $blnHasPreviewImage = false;
 
@@ -125,14 +139,39 @@ class ContentPreviewDownload extends ContentElement
             {
                 $im = new Imagick();
                 $im->readimage(TL_ROOT . '/' . $this->previewFile . $strFirst);
-                $im->setImageFormat('jpg');
+                $im->setImageFormat($this->previewExtension);
+
+                if ('jpg' === $this->previewExtension && method_exists($im, 'setImageAlphaChannel')) {
+                    $im->setImageAlphaChannel(Imagick::ALPHACHANNEL_DEACTIVATE);
+                }
+
                 $im->writeImage(TL_ROOT . '/' . $preview);
                 $im->clear();
                 $im->destroy();
             }
             else
             {
-                @exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
+                $flags = '';
+
+                if ('jpg' === $this->previewExtension) {
+                    $flags = '-alpha remove';
+                }
+
+                @exec(
+                    sprintf(
+                        'PATH=\$PATH:%s;export PATH;%s/convert %s %s/%s%s %s/%s 2>&1',
+                        $GLOBALS['TL_CONFIG']['imPath'],
+                        $GLOBALS['TL_CONFIG']['imPath'],
+                        $flags,
+                        TL_ROOT,
+                        $this->previewFile,
+                        $strFirst,
+                        TL_ROOT,
+                        $preview
+                    ),
+                    $convert_output,
+                    $convert_code
+                );
 
                 if (!is_file(TL_ROOT . '/' . $preview))
                 {

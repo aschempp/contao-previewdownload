@@ -21,7 +21,7 @@
 /**
  * Fields
  */
-$GLOBALS['TL_LANG']['tl_content']['previewFile']	= array('Download-Datei', 'Wählen Sie die Datei, welche zum Download angeboten werden soll.');
-$GLOBALS['TL_LANG']['tl_content']['previewImage']	= array('Vorschaubild', 'Sie können ein eigenes Vorschaubild angeben, anstatt eines automatisch erstellen zu lassen.');
-$GLOBALS['TL_LANG']['tl_content']['previewTips']	= array('Popup anzeigen', 'Popup mit weiteren Informationen beim darüberfahren anzeigen.');
-
+$GLOBALS['TL_LANG']['tl_content']['previewFile']        = array('Download-Datei', 'Wählen Sie die Datei, welche zum Download angeboten werden soll.');
+$GLOBALS['TL_LANG']['tl_content']['previewImage']       = array('Vorschaubild', 'Sie können ein eigenes Vorschaubild angeben, anstatt eines automatisch erstellen zu lassen.');
+$GLOBALS['TL_LANG']['tl_content']['previewTips']        = array('Popup anzeigen', 'Popup mit weiteren Informationen beim darüberfahren anzeigen.');
+$GLOBALS['TL_LANG']['tl_content']['previewExtension']   = array('Dateityp', 'Wählen Sie welcher Dateityp für das Vorschaubild verwendet werden soll.');
