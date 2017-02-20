@@ -21,177 +21,172 @@
 class ContentPreviewDownload extends ContentElement
 {
 
-	/**
-	 * Template
-	 * @var string
-	 */
-	protected $strTemplate = 'ce_previewdownload';
+    /**
+     * Template
+     * @var string
+     */
+    protected $strTemplate = 'ce_previewdownload';
 
 
-	/**
-	 * Return if the file does not exist
-	 * @return string
-	 */
-	public function generate()
-	{
+    /**
+     * Return if the file does not exist
+     * @return string
+     */
+    public function generate()
+    {
 
-		$objModel = \FilesModel::findByUuid($this->previewFile);
+        $objModel = \FilesModel::findByUuid($this->previewFile);
 
-		if ($objModel === null)
-		{
-			if (!\Validator::isUuid($this->singleSRC))
-			{
-				return '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
-			}
+        if ($objModel === null)
+        {
+            if (!\Validator::isUuid($this->singleSRC))
+            {
+                return '<p class="error">'.$GLOBALS['TL_LANG']['ERR']['version2format'].'</p>';
+            }
 
-			return '';
-		}
-		
-		$this->previewFile = $objModel->path;
+            return '';
+        }
 
-		// Return if there is no file
-		if (!strlen($this->previewFile) || !is_file(TL_ROOT . '/' . $this->previewFile))
-		{
-			return '';
-		}
+        $this->previewFile = $objModel->path;
 
-		// Send file to the browser
-		if (strlen($this->Input->get('file')) && $this->Input->get('file') == $this->previewFile)
-		{
-			$this->sendFileToBrowser($this->previewFile);
-		}
+        // Return if there is no file
+        if (!strlen($this->previewFile) || !is_file(TL_ROOT . '/' . $this->previewFile))
+        {
+            return '';
+        }
 
-		return parent::generate();
-	}
+        // Send file to the browser
+        if (strlen($this->Input->get('file')) && $this->Input->get('file') == $this->previewFile)
+        {
+            $this->sendFileToBrowser($this->previewFile);
+        }
 
-
-	/**
-	 * Generate content element
-	 */
-	protected function compile()
-	{
-		$objFile = new File($this->previewFile);
-		$allowedDownload = trimsplit(',', strtolower($GLOBALS['TL_CONFIG']['allowedDownload']));
-
-		if (!in_array($objFile->extension, $allowedDownload))
-		{
-			return;
-		}
+        return parent::generate();
+    }
 
 
-		$size = number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB';
+    /**
+     * Generate content element
+     */
+    protected function compile()
+    {
+        $objFile = new File($this->previewFile);
+        $allowedDownload = trimsplit(',', strtolower($GLOBALS['TL_CONFIG']['allowedDownload']));
 
-		if (!strlen($this->linkTitle))
-		{
-			$this->linkTitle = $objFile->basename;
-		}
+        if (!in_array($objFile->extension, $allowedDownload))
+        {
+            return;
+        }
 
-		$icon = 'assets/contao/images/' . $objFile->icon;
+        $size = number_format(($objFile->filesize/1024), 1, $GLOBALS['TL_LANG']['MSC']['decimalSeparator'], $GLOBALS['TL_LANG']['MSC']['thousandsSeparator']).' kB';
 
-		if (($imgSize = @getimagesize(TL_ROOT . '/' . $icon)) !== false)
-		{
-			$this->Template->imgSize = ' ' . $imgSize[3];
-		}
+        if (!strlen($this->linkTitle))
+        {
+            $this->linkTitle = $objFile->basename;
+        }
 
-		// Generate preview image
-		$strCacheKey = substr(md5($this->previewFile), 0, 8);		
-		$preview = 'assets/images/' . substr($strCacheKey, -1) . '/preview' . $this->id . '-' . $strCacheKey . '.jpg';
+        $icon = 'assets/contao/images/' . $objFile->icon;
 
-		$blnHasPreviewImage = false;
-		
-		if ($this->previewImage)
-		{
-			$objPreviewModel = \FilesModel::findByUuid($this->previewImage);
-			
-			if ($objPreviewModel !== null)
-			{
-				$this->previewImage = $objPreviewModel->path;
-				$blnHasPreviewImage = true;
-			}
-		}
-		
+        if (($imgSize = @getimagesize(TL_ROOT . '/' . $icon)) !== false)
+        {
+            $this->Template->imgSize = ' ' . $imgSize[3];
+        }
 
-		if ($blnHasPreviewImage && is_file(TL_ROOT . '/' . $this->previewImage))
-		{
-			$preview = $this->previewImage;
-		}
-		elseif (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
-		{
-			
-			$strFirst = '';
+        // Generate preview image
+        $strCacheKey = substr(md5($this->previewFile), 0, 8);
+        $preview = 'assets/images/' . substr($strCacheKey, -1) . '/preview' . $this->id . '-' . $strCacheKey . '.jpg';
 
-			if ($objFile->extension == 'pdf')
-				$strFirst = '[0]';
-			
-			if (class_exists('Imagick', false))
-			{
-			
-				$im = new Imagick();
-				$im->readimage(TL_ROOT . '/' . $this->previewFile . $strFirst); 
-				$im->setImageFormat('jpg');    
-				$im->writeImage(TL_ROOT . '/' . $preview); 
-				$im->clear(); 
-				$im->destroy();
-				
-			}
-			else
-			{
+        $blnHasPreviewImage = false;
 
-				@exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
+        if ($this->previewImage)
+        {
+            $objPreviewModel = \FilesModel::findByUuid($this->previewImage);
 
-				if (!is_file(TL_ROOT . '/' . $preview))
-				{
-					$convert_output = implode("<br />", $convert_output);
-					$reason = 'ImageMagick Exit Code: '.$convert_code;
+            if ($objPreviewModel !== null)
+            {
+                $this->previewImage = $objPreviewModel->path;
+                $blnHasPreviewImage = true;
+            }
+        }
 
-					if ($convert_code == 127)
-					{
-						$reason = 'ImageMagick is not available at ' . $GLOBALS['TL_CONFIG']['imPath'];
-					}
-					if (strpos($convert_output, 'gs: command not found'))
-					{
-						$reason = 'Unable to read PDF due to GhostScript error.';
-					}
+        if ($blnHasPreviewImage && is_file(TL_ROOT . '/' . $this->previewImage))
+        {
+            $preview = $this->previewImage;
+        }
+        elseif (!is_file(TL_ROOT . '/' . $preview) || filemtime(TL_ROOT . '/' . $preview) < (time()-604800)) // Image older than a week
+        {
+            $strFirst = '';
 
-					$this->log('Creating preview from "' . $this->previewFile . '" failed! '.$reason."\n\n".$convert_output, 'ContentPreviewDownload compile()', TL_ERROR);
-				}
-			}
-		}
+            if ('pdf' === $objFile->extension) {
+                $strFirst = '[0]';
+            }
 
-		if (is_file(TL_ROOT . '/' . $preview))
-		{
-			$imgSize = deserialize($this->size);
-			$arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
+            if (class_exists('Imagick', false))
+            {
+                $im = new Imagick();
+                $im->readimage(TL_ROOT . '/' . $this->previewFile . $strFirst);
+                $im->setImageFormat('jpg');
+                $im->writeImage(TL_ROOT . '/' . $preview);
+                $im->clear();
+                $im->destroy();
+            }
+            else
+            {
+                @exec(sprintf('PATH=\$PATH:%s;export PATH;%s/convert %s/%s'.$strFirst.' %s/%s 2>&1', $GLOBALS['TL_CONFIG']['imPath'], $GLOBALS['TL_CONFIG']['imPath'], TL_ROOT, $this->previewFile, TL_ROOT, $preview), $convert_output, $convert_code);
 
-			// Adjust image size in the back end
-			if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
-			{
-				$imgSize[0] = 640;
-				$imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
-			}
+                if (!is_file(TL_ROOT . '/' . $preview))
+                {
+                    $convert_output = implode("<br />", $convert_output);
+                    $reason = 'ImageMagick Exit Code: '.$convert_code;
 
-			$src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
+                    if ($convert_code == 127)
+                    {
+                        $reason = 'ImageMagick is not available at ' . $GLOBALS['TL_CONFIG']['imPath'];
+                    }
+                    if (strpos($convert_output, 'gs: command not found'))
+                    {
+                        $reason = 'Unable to read PDF due to GhostScript error.';
+                    }
 
-			if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
-			{
-				$this->Template->previewImgSize = ' ' . $imgSize[3];
-			}
-		}
+                    $this->log('Creating preview from "' . $this->previewFile . '" failed! '.$reason."\n\n".$convert_output, 'ContentPreviewDownload compile()', TL_ERROR);
+                }
+            }
+        }
 
-		if ($this->previewTips)
-		{
-			$this->Template->showTip = true;
-			$GLOBALS['TL_CSS'][] = 'system/modules/previewdownload/assets/tips.css';
-			$GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/previewdownload/assets/tips.js';
-		}
+        if (is_file(TL_ROOT . '/' . $preview))
+        {
+            $imgSize = deserialize($this->size);
+            $arrImageSize = getimagesize(TL_ROOT . '/' . $preview);
 
-		$this->Template->preview = $src;
-		$this->Template->icon = $icon;
-		$this->Template->link = $this->linkTitle;
-		$this->Template->rel = $GLOBALS['TL_LANG']['MSC']['previewFileName'] . ' ' . $objFile->basename . ', ' . $GLOBALS['TL_LANG']['MSC']['previewFileSize'] . ' ' . $size;
-		$this->Template->margin = $this->generateMargin(deserialize($this->imagemargin), 'padding');
-		$this->Template->title = specialchars($this->linkTitle);
-		$this->Template->href = $this->urlEncode($this->previewFile); //$this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($this->Environment->request, '?') !== false) ? '&amp;' : '?') . 'file=' . $this->urlEncode($this->previewFile);
-	}
+            // Adjust image size in the back end
+            if (TL_MODE == 'BE' && $arrImageSize[0] > 640 && ($imgSize[0] > 640 || !$imgSize[0]))
+            {
+                $imgSize[0] = 640;
+                $imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
+            }
+
+            $src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
+
+            if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
+            {
+                $this->Template->previewImgSize = ' ' . $imgSize[3];
+            }
+        }
+
+        if ($this->previewTips)
+        {
+            $this->Template->showTip = true;
+            $GLOBALS['TL_CSS'][] = 'system/modules/previewdownload/assets/tips.css';
+            $GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/previewdownload/assets/tips.js';
+        }
+
+        $this->Template->preview = $src;
+        $this->Template->icon = $icon;
+        $this->Template->link = $this->linkTitle;
+        $this->Template->rel = $GLOBALS['TL_LANG']['MSC']['previewFileName'] . ' ' . $objFile->basename . ', ' . $GLOBALS['TL_LANG']['MSC']['previewFileSize'] . ' ' . $size;
+        $this->Template->margin = $this->generateMargin(deserialize($this->imagemargin), 'padding');
+        $this->Template->title = specialchars($this->linkTitle);
+        $this->Template->href = $this->urlEncode($this->previewFile); //$this->Environment->request . (($GLOBALS['TL_CONFIG']['disableAlias'] || strpos($this->Environment->request, '?') !== false) ? '&amp;' : '?') . 'file=' . $this->urlEncode($this->previewFile);
+    }
 }
 
