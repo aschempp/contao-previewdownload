@@ -204,7 +204,7 @@ class ContentPreviewDownload extends ContentElement
                 $imgSize[1] = floor(640 * $arrImageSize[1] / $arrImageSize[0]);
             }
 
-            $src = $this->getImage($preview, $imgSize[0], $imgSize[1]);
+            $src = $this->getImage($preview, $imgSize[0], $imgSize[1], $imgSize[2]);
 
             if (($imgSize = @getimagesize(TL_ROOT . '/' . $src)) !== false)
             {
